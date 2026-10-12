@@ -24,14 +24,12 @@ function initGame() {
 
     game_id = getUrlParam("id");
     
-    // Faz a requisição local do pkgs.json para pegar as informações do jogo
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             var games = JSON.parse(this.responseText);
             current_game = games[game_id];
             
-            // Preenche os dados do jogo na tela de forma automática
             document.getElementById("game-title").innerText = current_game.name;
             document.getElementById("game-icon").src = current_game.icon;
             document.getElementById("game-size").innerText = "Size: " + current_game.size;
@@ -49,7 +47,7 @@ function initGame() {
 function enviarInstalacao() {
     var ps4_ip = getCookie("PS4IP");
     if (!ps4_ip || ps4_ip == "") {
-        ps4_ip = "192.168.1.2"; // IP padrão do seu PS4 que configuramos
+        ps4_ip = "192.168.1.2"; 
     }
 
     if (!current_game || !current_game.links || current_game.links.length == 0) {
@@ -57,29 +55,49 @@ function enviarInstalacao() {
         return;
     }
 
-    var pkg_url = current_game.URL;
+    // Coleta a URL de download estruturada no array de links do JSON
+    var pkg_url = current_game.links[0];
 
-    // Monta o comando JSON correto exigido pelo Remote Package Installer do PS4
     var json_payload = {
         "type": "direct",
         "packages": [pkg_url]
     };
 
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "http://" + ps4_ip + ":12800/api/install", true);
-    xhttp.setRequestHeader("Content-Type", "application/json");
+    // Monta o formulário para transmissão sem bloqueios HTTPS -> HTTP
+    var form = document.createElement("form");
+    form.method = "POST";
+    form.action = "http://" + ps4_ip + ":12800/api/install";
+    form.target = "submit-iframe"; 
+
+    var input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload"; 
+    input.value = JSON.stringify(json_payload);
+    form.appendChild(input);
+
+    var iframe = document.getElementById("submit-iframe");
+    if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "submit-iframe";
+        iframe.name = "submit-iframe";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+    }
+
+    document.body.appendChild(form);
     
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                alert("Sucesso! Comando enviado. Verifique as Notificações do seu PS4.");
-            } else {
-                alert("Não foi possível conectar ao PS4.\nCertifique-se de que o Remote Package Installer está aberto no console e o IP está correto.");
-            }
+    try {
+        form.submit();
+        alert("Comando enviado! Verifique as Notificações de Download no menu principal do seu PS4.");
+    } catch(e) {
+        alert("Erro ao disparar o envio: " + e.message);
+    }
+    
+    setTimeout(function() {
+        if (form.parentNode) {
+            form.parentNode.removeChild(form);
         }
-    };
-    
-    xhttp.send(JSON.stringify(json_payload));
+    }, 500);
 }
 </script>
 </head>
