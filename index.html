@@ -24,7 +24,6 @@ function checkCookie() {
         document.body.style.backgroundImage = "url("+background+")";
     }
 	
-    // Força o sistema a buscar o arquivo pkgs.json local
     document.getElementById("searchbar").setAttribute("onkeyup", "search(\"pkgs.json\")");
     request("pkgs.json");
 }
