@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-16">
+<title>Brew Store - Game info</title>
+<link rel="stylesheet" href="style.css">
+<script src="main.js"></script>
+<script>
+var game_id;
+var current_game;
+
+function getUrlParam(param) {
+    var urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+function initGame() {
+    var background = getCookie("background");
+    if (background == "") {
+        document.body.style.backgroundImage = "url('background.png')";	   	   
+    } else {
+        document.body.style.backgroundImage = "url(" + background + ")";
+    }
+
+    game_id = getUrlParam("id");
+    
+    // Faz a requisição local do pkgs.json para pegar as informações do jogo
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var games = JSON.parse(this.responseText);
+            current_game = games[game_id];
+            
+            // Preenche os dados do jogo na tela de forma automática
+            document.getElementById("game-title").innerText = current_game.name;
+            document.getElementById("game-icon").src = current_game.icon;
+            document.getElementById("game-size").innerText = "Size: " + current_game.size;
+            document.getElementById("game-id").innerText = "Title ID: " + current_game.titleid;
+            
+            if(current_game.description) {
+                document.getElementById("game-desc").innerText = current_game.description.join(" ");
+            }
+        }
+    };
+    xhttp.open("GET", "pkgs.json", true);
+    xhttp.send();
+}
+
+function enviarInstalacao() {
+    var ps4_ip = getCookie("PS4IP");
+    if (!ps4_ip || ps4_ip == "") {
+        ps4_ip = "192.168.1.2"; // IP padrão do seu PS4 que configuramos
+    }
+
+    if (!current_game || !current_game.links || current_game.links.length == 0) {
+        alert("Erro: Link do PKG não encontrado!");
+        return;
+    }
+
+    var pkg_url = current_game.links[0];
+
+    // Monta o comando JSON correto exigido pelo Remote Package Installer do PS4
+    var json_payload = {
+        "type": "direct",
+        "packages": [pkg_url]
+    };
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "http://" + ps4_ip + ":12800/api/install", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                alert("Sucesso! Comando enviado. Verifique as Notificações do seu PS4.");
+            } else {
+                alert("Não foi possível conectar ao PS4.\nCertifique-se de que o Remote Package Installer está aberto no console e o IP está correto.");
+            }
+        }
+    };
+    
+    xhttp.send(JSON.stringify(json_payload));
+}
+</script>
+</head>
+<body onload="initGame()">
+<div id="mySidenav" class="sidenav">
+  <a href="index.html">PKG'S</a>
+  <a href="settings.html">Settings</a>
+</div>
+<div class="main">
+<center id="center">
+    <div id="content">
+        <h1 id="game-title" style="font-size: 32px; color: white; font-family: sans-serif; margin-bottom: 20px;">Carregando...</h1>
+        <br>
+        <img id="game-icon" src="" style="width: 250px; height: 250px; border-radius: 10px; border: 4px solid white; box-shadow: 0px 4px 15px rgba(0,0,0,0.5);">
+        <br><br>
+        <p id="game-id" style="font-size: 18px; color: #ccc; font-family: sans-serif;"></p>
+        <p id="game-size" style="font-size: 18px; color: #ccc; font-family: sans-serif;"></p>
+        <p id="game-desc" style="font-size: 16px; color: #aaa; font-family: sans-serif; max-width: 500px; margin: 15px auto;"></p>
+        <br>
+        <button onclick="enviarInstalacao()" style="background-color: #0082c3; color: white; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0px 4px 10px rgba(0,0,0,0.3); transition: 0.2s;">
+            INSTALAR NO PS4
+        </button>
+        <br><br>
+        <a href="index.html" style="color: #0082c3; text-decoration: none; font-size: 16px; font-family: sans-serif;">← Voltar para a Loja</a>
+    </div>
+</center>
+</div>
+</body>
+</html>
