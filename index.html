@@ -1,0 +1,93 @@
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-16">
+<title>Brew</title>
+<link rel="shortcut icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<script src="main.js"></script>
+<script>
+function setCookie(cname,cvalue,exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires=" + d.toGMTString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+function mobilecheck() 
+{
+    // Força a execução direta no PS4 evitando loops de redirecionamento
+    checkCookie();
+}
+
+function checkCookie() {
+    var background = getCookie("background");
+
+    if (background == "") 
+    {
+        document.body.style.backgroundImage = "url('background.png')";	   	   
+    }
+    else  
+    {
+        document.body.style.backgroundImage = "url("+background+")";
+    }
+	
+    // Força o IP e o Link corretos do seu servidor para evitar erros de leitura
+    var PS4IP = "192.168.1.2";
+    var pkglink = "http://f005.backblazeb2.com/file/storejson/pkgs.json";
+    
+    setCookie("PS4IP", PS4IP, 365);
+    setCookie("pkglink", pkglink, 365);
+	
+    // Inicializa a barra de buscas e faz a requisição dos jogos
+    document.getElementById("searchbar").setAttribute("onkeyup", "search(\""+pkglink+"\")");
+    request(pkglink);
+}
+</script>
+</head>
+<body onload="mobilecheck()">
+<div id="mySidenav" class="sidenav">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+  <a href="index.html">PKG'S</a>
+  <a href="settings.html">Settings</a>
+  <a href="help.html">Help</a>
+</div>
+<div class="main">
+<span id="nav_button" class="nav_button" onclick="openNav()"><img src="button.png"></span>
+<center id="center">
+<div id="content" >
+<font size="12" id="headline" class="nohover">PKG'S</font></br></br>
+<form class="pure-form" onsubmit="event.preventDefault();">
+<input id="searchbar" type="text" placeholder="Search">
+</form>
+</br>
+<div id="filter">
+<font size="6" id="headline" class="nohover">Filter by Categories</font></br></br>
+</div>
+</br>
+</div>
+</center>
+</div>
+<script>
+function openNav() {
+    document.getElementById("mySidenav").style.width = "250px";
+}
+
+function closeNav() {
+    document.getElementById("mySidenav").style.width = "0";
+}
+</script>
