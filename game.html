@@ -70,50 +70,29 @@ function enviarInstalacao() {
         return;
     }
 
-    var pkg_url = current_game.links; 
+    // Coleta a URL de download estruturada no array de links do seu JSON
+    var pkg_url = current_game.links[0];
 
-    // Estrutura exata do comando exigido pelo PS4
     var json_payload = {
         "type": "direct",
         "packages": [pkg_url]
     };
 
-    // Cria o formulário em formato texto puro para o navegador do PS4/PC aceitar enviar
-    var form = document.createElement("form");
-    form.method = "POST";
-    form.action = "http://" + ps4_ip + ":12800/api/install";
-    form.enctype = "text/plain"; 
-    form.target = "submit-iframe"; 
-
-    var input = document.createElement("input");
-    input.type = "hidden";
-    // Envia o JSON puro sem chaves extras no cabeçalho
-    input.name = JSON.stringify(json_payload); 
-    form.appendChild(input);
-
-    var iframe = document.getElementById("submit-iframe");
-    if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "submit-iframe";
-        iframe.name = "submit-iframe";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-    }
-
-    document.body.appendChild(form);
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "http://" + ps4_ip + ":12800/api/install", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
     
-    try {
-        form.submit();
-        alert("Comando enviado para o PS4! Verifique o aplicativo Remote Package Installer na TV.");
-    } catch(e) {
-        alert("Erro ao disparar sinal: " + e.message);
-    }
-    
-    setTimeout(function() {
-        if (form.parentNode) {
-            form.parentNode.removeChild(form);
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                alert("Sucesso! Comando enviado. Verifique as Notificações do seu PS4.");
+            } else {
+                alert("Não foi possível conectar ao PS4.\nCertifique-se de que o Remote Package Installer está aberto no console e o IP está correto.");
+            }
         }
-    }, 500);
+    };
+    
+    xhttp.send(JSON.stringify(json_payload));
 }
 </script>
 </head>
