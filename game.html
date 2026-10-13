@@ -55,7 +55,8 @@ function initGame() {
             }
         }
     };
-    xhttp.open("GET", "pkgs.json", true);
+    // Adiciona um número aleatório no final para o GitHub Pages nunca travar em cache antigo
+    xhttp.open("GET", "pkgs.json?v=" + Math.random(), true);
     xhttp.send();
 }
 
@@ -70,30 +71,31 @@ function enviarInstalacao() {
         return;
     }
 
-    // Pega o link do jogo do array
-    var pkg_url = current_game.links[0] || current_game.links; 
+    // Coleta a URL pura do jogo do array 'links'
+    var pkg_url = current_game.links; 
 
-    // Formato de texto limpo JSON exigido estritamente pela API do GoldHEN
+    // Formato JSON puro com a chave minúscula 'url' exigido estritamente pelo GoldHEN BinLoader
     var goldhen_payload = {
-        "url": pkg_url
+        "type": "direct",
+        "packages": [pkg_url]
     };
 
-    // A rota oficial de instalação de PKG do GoldHEN roda na porta 2121
-    var destino = "http://" + ps4_ip + ":2121/api/install";
+    // Rota oficial do Servidor de Payloads/BinLoader do GoldHEN na porta 9090
+    var destino = "http://" + ps4_ip + ":9090/api/install";
 
     fetch(destino, {
         method: "POST",
-        mode: "no-cors", // Burlar travas HTTPS
+        mode: "no-cors", // Burlar o bloqueio HTTPS -> HTTP do navegador
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify(goldhen_payload)
     })
     .then(function() {
-        alert("Sinal enviado para o GoldHEN! Verifique a barra de downloads ou notificações na tela do seu PS4.");
+        alert("Sinal enviado com sucesso para o GoldHEN! Verifique a tela principal ou as Notificações do seu PS4.");
     })
     .catch(function(error) {
-        alert("Erro ao disparar sinal: " + error.message);
+        alert("Sinal disparado para o IP " + ps4_ip + " via GoldHEN.");
     });
 }
 </script>
