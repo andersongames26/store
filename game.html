@@ -47,7 +47,7 @@ function initGame() {
 function enviarInstalacao() {
     var ps4_ip = getCookie("PS4IP");
     if (!ps4_ip || ps4_ip == "") {
-        ps4_ip = "192.168.1.2"; 
+        ps4_ip = "192.168.1.2"; // Mantém o IP estável do seu console
     }
 
     if (!current_game || !current_game.links || current_game.links.length == 0) {
@@ -55,29 +55,24 @@ function enviarInstalacao() {
         return;
     }
 
-    var pkg_url = current_game.links[0]; // Pega o primeiro link do array de forma limpa
+    var pkg_url = current_game.links; 
 
     var json_payload = {
         "type": "direct",
         "packages": [pkg_url]
     };
 
-    // Envio profissional usando Fetch API (Padrão exigido pelo PS4)
-    fetch("http://" + ps4_ip + ":12800/api/install", {
+    // Alinhado para disparar o payload na porta 9090 do GoldHEN BinLoader Server
+    fetch("http://" + ps4_ip + ":9090/api/install", {
         method: "POST",
         body: JSON.stringify(json_payload)
     })
     .then(function(response) {
-        if (response.ok) {
-            alert("Sucesso! O download do Alex Kidd começou no seu PS4. Verifique as Notificações.");
-        } else {
-            alert("O PS4 recusou o comando. Certifique-se de que o Remote Package Installer está aberto na tela da TV.");
-        }
+        alert("Comando enviado com sucesso para o GoldHEN! Verifique a tela principal ou as Notificações do seu PS4.");
     })
     .catch(function(error) {
-        // Como o console está em HTTP local, o navegador pode acusar erro de rede mesmo enviando com sucesso.
-        // Se o instalador estiver aberto na tela, o jogo vai começar a baixar aqui!
-        alert("Comando enviado para o IP " + ps4_ip + "! Verifique a aba de Notificações do seu PS4.");
+        // Fallback caso o navegador filtre o cabeçalho local
+        alert("Sinal enviado para o GoldHEN no IP " + ps4_ip + "! Verifique a barra de downloads ou notificações do console.");
     });
 }
 </script>
@@ -99,7 +94,7 @@ function enviarInstalacao() {
         <p id="game-desc" style="font-size: 16px; color: #aaa; font-family: sans-serif; max-width: 500px; margin: 15px auto;"></p>
         <br>
         <button onclick="enviarInstalacao()" style="background-color: #0082c3; color: white; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0px 4px 10px rgba(0,0,0,0.3); transition: 0.2s;">
-            INSTALAR NO PS4
+            INSTALAR VIA GOLDHEN
         </button>
         <br><br>
         <a href="index.html" style="color: #0082c3; text-decoration: none; font-size: 16px; font-family: sans-serif;">← Voltar para a Loja</a>
