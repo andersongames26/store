@@ -47,7 +47,7 @@ function initGame() {
 function enviarInstalacao() {
     var ps4_ip = getCookie("PS4IP");
     if (!ps4_ip || ps4_ip == "") {
-        ps4_ip = "192.168.1.2"; // Mantém o IP estável do seu console
+        ps4_ip = "192.168.1.2"; 
     }
 
     if (!current_game || !current_game.links || current_game.links.length == 0) {
@@ -55,23 +55,26 @@ function enviarInstalacao() {
         return;
     }
 
+    // Coleta o link de download direto do array 'links' do seu JSON
     var pkg_url = current_game.links; 
 
-    var json_payload = {
-        "type": "direct",
-        "packages": [pkg_url]
+    // Formato de payload simplificado nativo exigido pelo GoldHEN para instalação de PKGs
+    var goldhen_payload = {
+        "url": pkg_url
     };
 
-    // Alinhado para disparar o payload na porta 9090 do GoldHEN BinLoader Server
+    // Envia a requisição direto para o Servidor do GoldHEN na porta 9090
     fetch("http://" + ps4_ip + ":9090/api/install", {
         method: "POST",
-        body: JSON.stringify(json_payload)
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(goldhen_payload)
     })
     .then(function(response) {
         alert("Comando enviado com sucesso para o GoldHEN! Verifique a tela principal ou as Notificações do seu PS4.");
     })
     .catch(function(error) {
-        // Fallback caso o navegador filtre o cabeçalho local
         alert("Sinal enviado para o GoldHEN no IP " + ps4_ip + "! Verifique a barra de downloads ou notificações do console.");
     });
 }
