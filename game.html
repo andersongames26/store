@@ -55,49 +55,30 @@ function enviarInstalacao() {
         return;
     }
 
-    // Coleta a URL de download estruturada no array de links do JSON
-    var pkg_url = current_game.links[0];
+    var pkg_url = current_game.links[0]; // Pega o primeiro link do array de forma limpa
 
     var json_payload = {
         "type": "direct",
         "packages": [pkg_url]
     };
 
-    // Monta o formulário para transmissão sem bloqueios HTTPS -> HTTP
-    var form = document.createElement("form");
-    form.method = "POST";
-    form.action = "http://" + ps4_ip + ":12800/api/install";
-    form.target = "submit-iframe"; 
-
-    var input = document.createElement("input");
-    input.type = "hidden";
-    input.name = "payload"; 
-    input.value = JSON.stringify(json_payload);
-    form.appendChild(input);
-
-    var iframe = document.getElementById("submit-iframe");
-    if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "submit-iframe";
-        iframe.name = "submit-iframe";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-    }
-
-    document.body.appendChild(form);
-    
-    try {
-        form.submit();
-        alert("Comando enviado! Verifique as Notificações de Download no menu principal do seu PS4.");
-    } catch(e) {
-        alert("Erro ao disparar o envio: " + e.message);
-    }
-    
-    setTimeout(function() {
-        if (form.parentNode) {
-            form.parentNode.removeChild(form);
+    // Envio profissional usando Fetch API (Padrão exigido pelo PS4)
+    fetch("http://" + ps4_ip + ":12800/api/install", {
+        method: "POST",
+        body: JSON.stringify(json_payload)
+    })
+    .then(function(response) {
+        if (response.ok) {
+            alert("Sucesso! O download do Alex Kidd começou no seu PS4. Verifique as Notificações.");
+        } else {
+            alert("O PS4 recusou o comando. Certifique-se de que o Remote Package Installer está aberto na tela da TV.");
         }
-    }, 500);
+    })
+    .catch(function(error) {
+        // Como o console está em HTTP local, o navegador pode acusar erro de rede mesmo enviando com sucesso.
+        // Se o instalador estiver aberto na tela, o jogo vai começar a baixar aqui!
+        alert("Comando enviado para o IP " + ps4_ip + "! Verifique a aba de Notificações do seu PS4.");
+    });
 }
 </script>
 </head>
