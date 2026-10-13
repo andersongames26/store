@@ -70,29 +70,31 @@ function enviarInstalacao() {
         return;
     }
 
-    // Coleta a URL de download estruturada no array de links do seu JSON
-    var pkg_url = current_game.links[0];
+    // Pega o link do jogo do array
+    var pkg_url = current_game.links[0] || current_game.links; 
 
-    var json_payload = {
-        "type": "direct",
-        "packages": [pkg_url]
+    // Formato de texto limpo JSON exigido estritamente pela API do GoldHEN
+    var goldhen_payload = {
+        "url": pkg_url
     };
 
-    var xhttp = new XMLHttpRequest();
-    xhttp.open("POST", "http://" + ps4_ip + ":12800/api/install", true);
-    xhttp.setRequestHeader("Content-Type", "application/json");
-    
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                alert("Sucesso! Comando enviado. Verifique as Notificações do seu PS4.");
-            } else {
-                alert("Não foi possível conectar ao PS4.\nCertifique-se de que o Remote Package Installer está aberto no console e o IP está correto.");
-            }
-        }
-    };
-    
-    xhttp.send(JSON.stringify(json_payload));
+    // A rota oficial de instalação de PKG do GoldHEN roda na porta 2121
+    var destino = "http://" + ps4_ip + ":2121/api/install";
+
+    fetch(destino, {
+        method: "POST",
+        mode: "no-cors", // Burlar travas HTTPS
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(goldhen_payload)
+    })
+    .then(function() {
+        alert("Sinal enviado para o GoldHEN! Verifique a barra de downloads ou notificações na tela do seu PS4.");
+    })
+    .catch(function(error) {
+        alert("Erro ao disparar sinal: " + error.message);
+    });
 }
 </script>
 </head>
@@ -113,7 +115,7 @@ function enviarInstalacao() {
         <p id="game-desc" style="font-size: 16px; color: #aaa; font-family: sans-serif; max-width: 500px; margin: 15px auto;"></p>
         <br>
         <button onclick="enviarInstalacao()" style="background-color: #0082c3; color: white; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0px 4px 10px rgba(0,0,0,0.3); transition: 0.2s;">
-            INSTALAR NO PS4
+            INSTALAR VIA GOLDHEN
         </button>
         <br><br>
         <a href="index.html" style="color: #0082c3; text-decoration: none; font-size: 16px; font-family: sans-serif;">← Voltar para a Loja</a>
