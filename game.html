@@ -8,7 +8,6 @@
 var game_id;
 var current_game;
 
-// Função auxiliar de cookies embutida para não depender do main.js
 function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
@@ -71,32 +70,50 @@ function enviarInstalacao() {
         return;
     }
 
-    // Coleta o link de download direto do array 'links' do seu JSON do GitHub
-    var pkg_url = current_game.links[0]; 
+    var pkg_url = current_game.links; 
 
+    // Estrutura exata do comando exigido pelo PS4
     var json_payload = {
         "type": "direct",
         "packages": [pkg_url]
     };
 
-    var destino = "http://" + ps4_ip + ":12800/api/install";
+    // Cria o formulário em formato texto puro para o navegador do PS4/PC aceitar enviar
+    var form = document.createElement("form");
+    form.method = "POST";
+    form.action = "http://" + ps4_ip + ":12800/api/install";
+    form.enctype = "text/plain"; 
+    form.target = "submit-iframe"; 
 
-    // Envia usando a Fetch API padrão com a propriedade 'no-cors' 
-    // Isso faz o navegador ignorar o bloqueio de segurança HTTPS -> HTTP!
-    fetch(destino, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(json_payload)
-    })
-    .then(function() {
-        alert("Comando enviado! Verifique as Notificações de Download no seu PS4.");
-    })
-    .catch(function(error) {
-        alert("Erro ao disparar sinal: " + error.message);
-    });
+    var input = document.createElement("input");
+    input.type = "hidden";
+    // Envia o JSON puro sem chaves extras no cabeçalho
+    input.name = JSON.stringify(json_payload); 
+    form.appendChild(input);
+
+    var iframe = document.getElementById("submit-iframe");
+    if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "submit-iframe";
+        iframe.name = "submit-iframe";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+    }
+
+    document.body.appendChild(form);
+    
+    try {
+        form.submit();
+        alert("Comando enviado para o PS4! Verifique o aplicativo Remote Package Installer na TV.");
+    } catch(e) {
+        alert("Erro ao disparar sinal: " + e.message);
+    }
+    
+    setTimeout(function() {
+        if (form.parentNode) {
+            form.parentNode.removeChild(form);
+        }
+    }, 500);
 }
 </script>
 </head>
