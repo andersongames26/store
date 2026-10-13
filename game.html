@@ -4,10 +4,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-16">
 <title>Brew Store - Game info</title>
 <link rel="stylesheet" href="style.css">
-<script src="main.js"></script>
 <script>
 var game_id;
 var current_game;
+
+// Função auxiliar de cookies embutida para não depender do main.js
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
 
 function getUrlParam(param) {
     var urlParams = new URLSearchParams(window.location.search);
@@ -55,7 +71,7 @@ function enviarInstalacao() {
         return;
     }
 
-    // Pega o primeiro link de dentro da lista 'links' do seu JSON
+    // Coleta o link de download direto do array 'links' do seu JSON do GitHub
     var pkg_url = current_game.links[0]; 
 
     var json_payload = {
@@ -63,7 +79,6 @@ function enviarInstalacao() {
         "packages": [pkg_url]
     };
 
-    // Alinhado de volta para a porta 12800 do Remote Package Installer App
     var destino = "http://" + ps4_ip + ":12800/api/install";
 
     // Envia usando a Fetch API padrão com a propriedade 'no-cors' 
@@ -77,7 +92,7 @@ function enviarInstalacao() {
         body: JSON.stringify(json_payload)
     })
     .then(function() {
-        alert("Comando enviado! Verifique a aba de Notificações/Downloads no seu PS4.");
+        alert("Comando enviado! Verifique as Notificações de Download no seu PS4.");
     })
     .catch(function(error) {
         alert("Erro ao disparar sinal: " + error.message);
