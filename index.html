@@ -1,65 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-16">
-<title>Brew Store</title>
-<link rel="shortcut icon" type="image/png" href="favicon.png">
-<link rel="stylesheet" href="style.css">
-<script src="main.js"></script>
+<title>Brew Store Online</title>
+<style>
+  body { background-color: #0b1426; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+  .box { background: #16223f; max-width: 400px; margin: 30px auto; padding: 20px; border-radius: 10px; border: 2px solid #0082c3; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+  .capa { width: 200px; height: 200px; border-radius: 8px; border: 3px solid white; margin-bottom: 15px; }
+  input { padding: 10px; width: 80%; border-radius: 5px; border: none; margin-bottom: 15px; text-align: center; font-size: 16px; }
+  button { background-color: #0082c3; color: white; border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 85%; }
+  button:hover { background-color: #00a4f5; }
+</style>
 <script>
-function mobilecheck() 
-{
-    checkCookie();
+function instalarJogo() {
+    var ps4_ip = document.getElementById("ps4ip").value;
+    if (!ps4_ip) {
+        alert("Por favor, digite o IP do seu PS4 primeiro!");
+        return;
+    }
+
+    // Guarda o IP para a pessoa não ter que digitar toda vez
+    localStorage.setItem("PS4_IP_STORE", ps4_ip);
+
+    // Link direto do seu Alex Kidd no Backblaze (HTTP Puro para o GoldHEN aceitar)
+    var pkg_url = "http://backblazeb2.com";
+
+    // Formato exato que a API do GoldHEN exige receber
+    var goldhen_payload = {
+        "url": pkg_url
+    };
+
+    // Dispara direto para a porta 2121 do GoldHEN Installer (roda em segundo plano no PS4)
+    var url_destino = "http://" + ps4_ip + ":2121/api/install";
+
+    // Usa o modo 'no-cors' para o celular conseguir enviar o comando sem bloqueio do HTTPS
+    fetch(url_destino, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(goldhen_payload)
+    })
+    .then(function() {
+        alert("Comando enviado com sucesso!\nVerifique a aba de Notificações ou Downloads no seu PS4.");
+    })
+    .catch(function(err) {
+        alert("Erro ao enviar: " + err.message);
+    });
 }
 
-function checkCookie() {
-    var background = getCookie("background");
-
-    if (background == "") 
-    {
-        document.body.style.backgroundImage = "url('background.png')";	   	   
+// Carrega o IP salvo automaticamente ao abrir a página
+function carregarIP() {
+    var salvo = localStorage.getItem("PS4_IP_STORE");
+    if (salvo) {
+        document.getElementById("ps4ip").value = salvo;
     }
-    else  
-    {
-        document.body.style.backgroundImage = "url("+background+")";
-    }
-	
-    document.getElementById("searchbar").setAttribute("onkeyup", "search(\"pkgs.json\")");
-    request("pkgs.json");
 }
 </script>
 </head>
-<body onload="mobilecheck()">
-<div id="mySidenav" class="sidenav">
-  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-  <a href="index.html">PKG'S</a>
-  <a href="settings.html">Settings</a>
-  <a href="help.html">Help</a>
-</div>
-<div class="main">
-<span id="nav_button" class="nav_button" onclick="openNav()"><img src="button.png"></span>
-<center id="center">
-<div id="content" >
-<font size="12" id="headline" class="nohover">PKG'S</font></br></br>
-<form class="pure-form" onsubmit="event.preventDefault();">
-<input id="searchbar" type="text" placeholder="Search">
-</form>
-</br>
-<div id="filter">
-<font size="6" id="headline" class="nohover">Filter by Categories</font></br></br>
-</div>
-</br>
-</div>
-</center>
-</div>
-<script>
-function openNav() {
-    document.getElementById("mySidenav").style.width = "250px";
-}
+<body onload="carregarIP()">
 
-function closeNav() {
-    document.getElementById("mySidenav").style.width = "0";
-}
-</script>
+    <h1>Brew Store Online 🎮</h1>
+    <p>Baixe jogos direto do Backblaze no seu PS4</p>
+
+    <div class="box">
+        <h3>Configuração do Console</h3>
+        <input type="text" id="ps4ip" placeholder="Digite o IP do seu PS4 (Ex: 192.168.1.2)">
+    </div>
+
+    <div class="box">
+        <h2>Alex Kidd in Miracle World DX</h2>
+        <img class="capa" src="https://tcdn.com.br">
+        <p>Tamanho: 2.1 GB | Região: CUSA19442</p>
+        <button onclick="instalarJogo()">BAIXAR NO MEU PS4</button>
+    </div>
+
 </body>
 </html>
