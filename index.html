@@ -12,6 +12,7 @@
     header { background: linear-gradient(180deg, #0b1626, #070e1a); padding: 15px; border-bottom: 2px solid #0082c3; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     header h1 { font-size: 24px; color: #00a4f5; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
     .ip-box { background: #101f35; border: 1px solid #0082c3; padding: 8px 12px; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+    .ip-box label { font-size: 12px; color: #8da2bc; }
     .ip-box input { background: #050b14; border: 1px solid #1a314d; color: #fff; padding: 6px; width: 140px; text-align: center; border-radius: 3px; font-size: 14px; }
     
     /* Corpo Estilo OPL */
@@ -32,7 +33,7 @@
     .info-txt b { color: #fff; }
     
     /* Botão de Instalação Estilo OPL */
-    .btn-instalar { margin-top: 15px; background-gradient: linear-gradient(180deg, #0082c3, #005687); background-color: #0082c3; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,130,195,0.4); width: 80%; max-width: 300px; display: none; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+    .btn-instalar { margin-top: 15px; background-color: #0082c3; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,130,195,0.4); width: 80%; max-width: 300px; display: none; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
     .btn-instalar:hover { background-color: #00a4f5; box-shadow: 0 4px 15px rgba(0,164,245,0.6); transform: translateY(-2px); }
 </style>
 <script>
@@ -40,21 +41,19 @@ var listaDeJogos = [];
 var jogoSelecionado = null;
 
 function carregarLoja() {
-    // Recupera o IP do console salvo anteriormente
     var ipSalvo = localStorage.getItem("OPL_STORE_IP");
     if (ipSalvo) { document.getElementById("ps4ip").value = ipSalvo; }
 
-    // Busca o arquivo pkgs.json diretamente do seu Backblaze automaticamente
-    var urlJson = "https://backblazeb2.com";
+    // Puxa o arquivo de dentro do próprio repositório do seu GitHub
+    var urlJson = "pkgs.json";
     
     fetch(urlJson)
     .then(res => res.json())
     .then(data => {
         listaDeJogos = data;
         var containerLista = document.getElementById("lista");
-        containerLista.innerHTML = ""; // Limpa o carregando
+        containerLista.innerHTML = ""; 
         
-        // Monta a lista lateral estilo OPL de forma automatizada
         listaDeJogos.forEach((jogo, index) => {
             var item = document.createElement("div");
             item.className = "jogo-item";
@@ -63,30 +62,30 @@ function carregarLoja() {
             containerLista.appendChild(item);
         });
         
-        // Seleciona o primeiro jogo da lista por padrão
         if(listaDeJogos.length > 0) {
             containerLista.firstChild.click();
         }
     })
     .catch(err => {
-        document.getElementById("lista").innerHTML = "<div style='color:red; padding:20px;'>Erro ao carregar catálogo da nuvem. Verifique o CORS do bucket.</div>";
+        document.getElementById("lista").innerHTML = "<div style='color:red; padding:20px;'>Erro ao carregar o arquivo pkgs.json do seu GitHub.</div>";
     });
 }
 
 function selecionarJogo(index, elemento) {
-    // Remove seleção visual dos outros itens
     var itens = document.getElementsByClassName("jogo-item");
     for(var i=0; i<itens.length; i++) { itens[i].classList.remove("selected"); }
     elemento.classList.add("selected");
     
     jogoSelecionado = listaDeJogos[index];
     
-    // Atualiza a Capa Dinâmica Lateral
     var imgCapa = document.getElementById("capa-img");
     var txtSemCapa = document.getElementById("sem-capa-txt");
     
-    if(jogoSelecionado.icon || jogoSelecionado.icon_url) {
-        imgCapa.src = jogoSelecionado.icon || jogoSelecionado.icon_url;
+    // Suporte para ler 'icon' ou 'icon_url' do seu JSON
+    var urlImagem = jogoSelecionado.icon || jogoSelecionado.icon_url || "";
+    
+    if(urlImagem != "") {
+        imgCapa.src = urlImagem;
         imgCapa.style.display = "block";
         txtSemCapa.style.display = "none";
     } else {
@@ -94,11 +93,13 @@ function selecionarJogo(index, elemento) {
         txtSemCapa.style.display = "block";
     }
     
-    // Atualiza Painel de Informações do OPL
-    document.getElementById("info-id").innerHTML = "Title ID: <b>" + (jogoSelecionado.titleid || jogoSelecionado.title_id || "N/A") + "</b>";
-    document.getElementById("info-size").innerHTML = "Tamanho: <b>" + (jogoSelecionado.size || "N/A") + "</b>";
+    // Puxa as informações de ID e tamanho corretas do seu JSON
+    var idJogo = jogoSelecionado.titleid || jogoSelecionado.title_id || "N/A";
+    var tamJogo = jogoSelecionado.size || "N/A";
     
-    // Exibe o Botão de Instalação Remota via GoldHEN
+    document.getElementById("info-id").innerHTML = "Title ID: <b>" + idJogo + "</b>";
+    document.getElementById("info-size").innerHTML = "Tamanho: <b>" + tamJogo + "</b>";
+    
     document.getElementById("btn-install").style.display = "block";
 }
 
@@ -110,12 +111,19 @@ function dispararInstalacao() {
     }
     localStorage.setItem("OPL_STORE_IP", ip);
     
+    // Tratamento correto para ler a URL de dentro do array 'links' do seu pkgs.json
     var pkgUrl = jogoSelecionado.links || jogoSelecionado.package_url;
-    if (Array.isArray(pkgUrl)) { pkgUrl = pkgUrl[0]; }
+    if (Array.isArray(pkgUrl)) {
+        pkgUrl = pkgUrl[0]; // Pega a primeira string se for uma lista
+    }
+    
+    if (!pkgUrl) {
+        alert("Erro: Link do jogo não encontrado no arquivo JSON!");
+        return;
+    }
     
     var goldhen_payload = { "url": pkgUrl };
     
-    // Envia diretamente para a API do GoldHEN na rede local do console do usuário
     fetch("http://" + ip + ":2121/api/install", {
         method: "POST",
         mode: "no-cors",
@@ -123,10 +131,10 @@ function dispararInstalacao() {
         body: JSON.stringify(goldhen_payload)
     })
     .then(() => {
-        alert("Comando aceito pelo GoldHEN!\nO download começou no console.");
+        alert("Sinal de instalação enviado! Verifique as notificações no seu PS4.");
     })
     .catch(err => {
-        alert("Falha na comunicação de rede local: " + err.message);
+        alert("Falha na rede local: " + err.message);
     });
 }
 </script>
@@ -136,18 +144,16 @@ function dispararInstalacao() {
     <header>
         <h1>Anderson Games · OPL Store 🌍</h1>
         <div class="ip-box">
-            <label for="ps4ip" style="font-size:12px; color:#8da2bc;">IP DO SEU PS4:</label>
+            <label for="ps4ip">IP DO SEU PS4:</label>
             <input type="text" id="ps4ip" placeholder="192.168.1.X">
         </div>
     </header>
 
     <div class="container">
-        <!-- Lado Esquerdo: Lista de Títulos -->
         <div class="lista-jogos" id="lista">
-            <div style="padding: 20px; color: #566f8a;">Buscando jogos no Backblaze B2...</div>
+            <div style="padding: 20px; color: #566f8a;">Carregando jogos do repositório...</div>
         </div>
         
-        <!-- Lado Direito: Capa e Painel de Controle -->
         <div class="painel-detalhes">
             <div class="moldura-capa">
                 <span id="sem-capa-txt" class="sem-capa">Selecione um jogo<br>para ver a capa</span>
