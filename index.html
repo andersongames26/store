@@ -1,79 +1,164 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-16">
-<title>Brew Store Online</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anderson Games - OPL Store</title>
 <style>
-  body { background-color: #0b1426; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
-  .box { background: #16223f; max-width: 400px; margin: 30px auto; padding: 20px; border-radius: 10px; border: 2px solid #0082c3; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-  .capa { width: 200px; height: 200px; border-radius: 8px; border: 3px solid white; margin-bottom: 15px; }
-  input { padding: 10px; width: 80%; border-radius: 5px; border: none; margin-bottom: 15px; text-align: center; font-size: 16px; }
-  button { background-color: #0082c3; color: white; border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 85%; }
-  button:hover { background-color: #00a4f5; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: #050b14; color: #e0e6ed; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Topo da Loja */
+    header { background: linear-gradient(180deg, #0b1626, #070e1a); padding: 15px; border-bottom: 2px solid #0082c3; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    header h1 { font-size: 24px; color: #00a4f5; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    .ip-box { background: #101f35; border: 1px solid #0082c3; padding: 8px 12px; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+    .ip-box input { background: #050b14; border: 1px solid #1a314d; color: #fff; padding: 6px; width: 140px; text-align: center; border-radius: 3px; font-size: 14px; }
+    
+    /* Corpo Estilo OPL */
+    .container { flex: 1; display: flex; overflow: hidden; }
+    
+    /* Lado Esquerdo: Lista de Jogos */
+    .lista-jogos { width: 55%; border-right: 2px solid #1a314d; overflow-y: auto; background-color: #070f1a; padding: 10px; }
+    .jogo-item { padding: 12px 15px; margin-bottom: 8px; background: #0f1c30; border-radius: 5px; cursor: pointer; border-left: 5px solid transparent; transition: 0.2s; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .jogo-item:hover, .jogo-item.selected { background: #162c47; border-left: 5px solid #00a4f5; color: #fff; box-shadow: 0 2px 8px rgba(0,164,245,0.2); }
+    
+    /* Lado Direito: Capa Dinâmica e Painel de Infos */
+    .painel-detalhes { width: 45%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background-color: #050c17; position: relative; }
+    .moldura-capa { width: 240px; height: 240px; border: 4px solid #1a314d; border-radius: 8px; background: #091322; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.7); margin-bottom: 20px; transition: 0.3s; }
+    .moldura-capa img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .sem-capa { color: #566f8a; font-size: 14px; text-align: center; padding: 10px; }
+    
+    .info-txt { font-size: 15px; color: #9ab4cd; margin-bottom: 8px; font-family: monospace; }
+    .info-txt b { color: #fff; }
+    
+    /* Botão de Instalação Estilo OPL */
+    .btn-instalar { margin-top: 15px; background-gradient: linear-gradient(180deg, #0082c3, #005687); background-color: #0082c3; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,130,195,0.4); width: 80%; max-width: 300px; display: none; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+    .btn-instalar:hover { background-color: #00a4f5; box-shadow: 0 4px 15px rgba(0,164,245,0.6); transform: translateY(-2px); }
 </style>
 <script>
-function instalarJogo() {
-    var ps4_ip = document.getElementById("ps4ip").value;
-    if (!ps4_ip) {
-        alert("Por favor, digite o IP do seu PS4 primeiro!");
-        return;
-    }
+var listaDeJogos = [];
+var jogoSelecionado = null;
 
-    // Guarda o IP para a pessoa não ter que digitar toda vez
-    localStorage.setItem("PS4_IP_STORE", ps4_ip);
+function carregarLoja() {
+    // Recupera o IP do console salvo anteriormente
+    var ipSalvo = localStorage.getItem("OPL_STORE_IP");
+    if (ipSalvo) { document.getElementById("ps4ip").value = ipSalvo; }
 
-    // Link direto do seu Alex Kidd no Backblaze (HTTP Puro para o GoldHEN aceitar)
-    var pkg_url = "http://backblazeb2.com";
-
-    // Formato exato que a API do GoldHEN exige receber
-    var goldhen_payload = {
-        "url": pkg_url
-    };
-
-    // Dispara direto para a porta 2121 do GoldHEN Installer (roda em segundo plano no PS4)
-    var url_destino = "http://" + ps4_ip + ":2121/api/install";
-
-    // Usa o modo 'no-cors' para o celular conseguir enviar o comando sem bloqueio do HTTPS
-    fetch(url_destino, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(goldhen_payload)
+    // Busca o arquivo pkgs.json diretamente do seu Backblaze automaticamente
+    var urlJson = "https://backblazeb2.com";
+    
+    fetch(urlJson)
+    .then(res => res.json())
+    .then(data => {
+        listaDeJogos = data;
+        var containerLista = document.getElementById("lista");
+        containerLista.innerHTML = ""; // Limpa o carregando
+        
+        // Monta a lista lateral estilo OPL de forma automatizada
+        listaDeJogos.forEach((jogo, index) => {
+            var item = document.createElement("div");
+            item.className = "jogo-item";
+            item.innerHTML = "🎮 " + jogo.name;
+            item.onclick = function() { selecionarJogo(index, item); };
+            containerLista.appendChild(item);
+        });
+        
+        // Seleciona o primeiro jogo da lista por padrão
+        if(listaDeJogos.length > 0) {
+            containerLista.firstChild.click();
+        }
     })
-    .then(function() {
-        alert("Comando enviado com sucesso!\nVerifique a aba de Notificações ou Downloads no seu PS4.");
-    })
-    .catch(function(err) {
-        alert("Erro ao enviar: " + err.message);
+    .catch(err => {
+        document.getElementById("lista").innerHTML = "<div style='color:red; padding:20px;'>Erro ao carregar catálogo da nuvem. Verifique o CORS do bucket.</div>";
     });
 }
 
-// Carrega o IP salvo automaticamente ao abrir a página
-function carregarIP() {
-    var salvo = localStorage.getItem("PS4_IP_STORE");
-    if (salvo) {
-        document.getElementById("ps4ip").value = salvo;
+function selecionarJogo(index, elemento) {
+    // Remove seleção visual dos outros itens
+    var itens = document.getElementsByClassName("jogo-item");
+    for(var i=0; i<itens.length; i++) { itens[i].classList.remove("selected"); }
+    elemento.classList.add("selected");
+    
+    jogoSelecionado = listaDeJogos[index];
+    
+    // Atualiza a Capa Dinâmica Lateral
+    var imgCapa = document.getElementById("capa-img");
+    var txtSemCapa = document.getElementById("sem-capa-txt");
+    
+    if(jogoSelecionado.icon || jogoSelecionado.icon_url) {
+        imgCapa.src = jogoSelecionado.icon || jogoSelecionado.icon_url;
+        imgCapa.style.display = "block";
+        txtSemCapa.style.display = "none";
+    } else {
+        imgCapa.style.display = "none";
+        txtSemCapa.style.display = "block";
     }
+    
+    // Atualiza Painel de Informações do OPL
+    document.getElementById("info-id").innerHTML = "Title ID: <b>" + (jogoSelecionado.titleid || jogoSelecionado.title_id || "N/A") + "</b>";
+    document.getElementById("info-size").innerHTML = "Tamanho: <b>" + (jogoSelecionado.size || "N/A") + "</b>";
+    
+    // Exibe o Botão de Instalação Remota via GoldHEN
+    document.getElementById("btn-install").style.display = "block";
+}
+
+function dispararInstalacao() {
+    var ip = document.getElementById("ps4ip").value;
+    if(!ip) {
+        alert("Digite o IP do console!");
+        return;
+    }
+    localStorage.setItem("OPL_STORE_IP", ip);
+    
+    var pkgUrl = jogoSelecionado.links || jogoSelecionado.package_url;
+    if (Array.isArray(pkgUrl)) { pkgUrl = pkgUrl[0]; }
+    
+    var goldhen_payload = { "url": pkgUrl };
+    
+    // Envia diretamente para a API do GoldHEN na rede local do console do usuário
+    fetch("http://" + ip + ":2121/api/install", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(goldhen_payload)
+    })
+    .then(() => {
+        alert("Comando aceito pelo GoldHEN!\nO download começou no console.");
+    })
+    .catch(err => {
+        alert("Falha na comunicação de rede local: " + err.message);
+    });
 }
 </script>
 </head>
-<body onload="carregarIP()">
+<body onload="carregarLoja()">
 
-    <h1>Brew Store Online 🎮</h1>
-    <p>Baixe jogos direto do Backblaze no seu PS4</p>
+    <header>
+        <h1>Anderson Games · OPL Store 🌍</h1>
+        <div class="ip-box">
+            <label for="ps4ip" style="font-size:12px; color:#8da2bc;">IP DO SEU PS4:</label>
+            <input type="text" id="ps4ip" placeholder="192.168.1.X">
+        </div>
+    </header>
 
-    <div class="box">
-        <h3>Configuração do Console</h3>
-        <input type="text" id="ps4ip" placeholder="Digite o IP do seu PS4 (Ex: 192.168.1.2)">
-    </div>
-
-    <div class="box">
-        <h2>Alex Kidd in Miracle World DX</h2>
-        <img class="capa" src="https://tcdn.com.br">
-        <p>Tamanho: 2.1 GB | Região: CUSA19442</p>
-        <button onclick="instalarJogo()">BAIXAR NO MEU PS4</button>
+    <div class="container">
+        <!-- Lado Esquerdo: Lista de Títulos -->
+        <div class="lista-jogos" id="lista">
+            <div style="padding: 20px; color: #566f8a;">Buscando jogos no Backblaze B2...</div>
+        </div>
+        
+        <!-- Lado Direito: Capa e Painel de Controle -->
+        <div class="painel-detalhes">
+            <div class="moldura-capa">
+                <span id="sem-capa-txt" class="sem-capa">Selecione um jogo<br>para ver a capa</span>
+                <img id="capa-img" src="" alt="Capa do Jogo">
+            </div>
+            
+            <div id="info-id" class="info-txt"></div>
+            <div id="info-size" class="info-txt"></div>
+            
+            <button id="btn-install" class="btn-instalar" onclick="dispararInstalacao()">Instalar no Console</button>
+        </div>
     </div>
 
 </body>
